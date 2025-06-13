@@ -2,7 +2,7 @@ import { getTranslation } from './utils/getTranslation';
 import { PLUGIN_ID } from './pluginId';
 import { Initializer } from './components/Initializer';
 import { PinMap } from '@strapi/icons';
-import { MapBoxField } from './components/custom-field/MapBoxField';
+import { MapBoxField } from './components/custom-field/MapBoxField/index';
 
 export default {
   register(app: any) {
