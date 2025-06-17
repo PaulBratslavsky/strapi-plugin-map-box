@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+import { getPluginConfig } from '../utils';
 
 export interface MapboxFeature {
   id: string;
@@ -32,11 +33,11 @@ interface MapBoxConfig {
 const service = ({ strapi }: { strapi: Core.Strapi }) => ({
   async locationSearch(query: string) {
     try {
-      const pluginSettings = (await strapi.config.get(
-        'plugin::strapi-plugin-map-box'
-      )) as MapBoxConfig;
+      const pluginSettings = getPluginConfig('public');
 
-      if (!pluginSettings?.accessToken) {
+      console.log('pluginSettings', pluginSettings);
+
+      if (!pluginSettings.accessToken) {
         return {
           error:
             'MapBox access token is not configured. Please add your access token in the plugin settings.',
@@ -45,6 +46,7 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
       }
 
       const MAPBOX_ACCESS_TOKEN = pluginSettings.accessToken;
+      console.log('MAPBOX_ACCESS_TOKEN', MAPBOX_ACCESS_TOKEN);
       console.log('Searching for:', query);
 
       const response = await fetch(

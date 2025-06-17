@@ -1,11 +1,16 @@
-import { type MapBoxValue, type ViewState, DEFAULT_VIEW_STATE,  } from './types';
+import { type MapBoxValue, type ViewState, DEFAULT_VIEW_STATE } from './types';
 
 import { useEffect, useState } from 'react';
 import { useFetchClient } from '@strapi/strapi/admin';
 
+type config = {
+  accessToken: string;
+  debugMode: boolean;
+};
+
 export const useMapBoxSettings = () => {
   const { get } = useFetchClient();
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [config, setConfig] = useState<config | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,7 +19,8 @@ export const useMapBoxSettings = () => {
       try {
         setIsLoading(true);
         const { data } = await get('/strapi-plugin-map-box/get-settings');
-        setAccessToken(data.accessToken);
+        console.log('data from getSettings', data);
+        setConfig(data);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch MapBox settings');
@@ -25,7 +31,7 @@ export const useMapBoxSettings = () => {
     fetchSettings();
   }, []);
 
-  return { accessToken, isLoading, error };
+  return { config, isLoading, error };
 };
 
 export const useMapLocationHook = (initialValue?: MapBoxValue) => {

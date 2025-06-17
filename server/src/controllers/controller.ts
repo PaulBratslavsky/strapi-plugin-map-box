@@ -1,11 +1,8 @@
 import type { Core } from '@strapi/strapi';
+import { getPluginConfig } from '../utils';
 
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   async locationSearch(ctx) {
-    console.log("********** FROM CONTROLLER ***********");
-    console.log('ctx', ctx);
-    console.log("*********** FROM CONTROLLER ***********");
-
     // Extract query from URL path
     const query = ctx.params.query;
     console.log('Query from URL:', query);
@@ -19,7 +16,8 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async getSettings(ctx) {
-    const result = await strapi.config.get('plugin::strapi-plugin-map-box');
+    const result = getPluginConfig('public')
+    console.log('result from getSettings', result);
     ctx.body = result;
   },
 });
