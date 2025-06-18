@@ -1,6 +1,13 @@
 {
-  "version": "0.0.0",
-  "keywords": [],
+  "version": "0.0.1",
+  "keywords": [
+    "mapbox",
+    "map",
+    "location",
+    "mapbox-plugin",
+    "mapbox-map",
+    "mapbox-location"
+  ],
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",
@@ -65,10 +72,18 @@
     "kind": "plugin",
     "name": "strapi-plugin-map-box",
     "displayName": "MapBox",
-    "description": "MapBox map field."
+    "description": "This plugin allows you to add a map field to your Strapi content types. It uses MapBox to display the map and search for locations."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PaulBratslavsky/strapi-plugin-map-box"
   },
   "name": "strapi-plugin-map-box",
   "description": "MapBox map field.",
-  "license": "MIT",
-  "author": "paul brats <paul.braatslavsky@strapi.io>"
+  "author": {
+    "name": "Paul Bratslavsky",
+    "email": "paul.braatslavsky@strapi.io",
+    "url": "https://github.com/PaulBratslavsky"
+  },
+  "license": "MIT"
 }
