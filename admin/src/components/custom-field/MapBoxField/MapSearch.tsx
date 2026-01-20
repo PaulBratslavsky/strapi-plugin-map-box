@@ -5,12 +5,20 @@ const ControlsContainer = styled.div`
   position: absolute;
   top: 1rem;
   left: 1rem;
+  right: 1rem;
   z-index: 10;
-  width: 350px;
+`;
+
+const SearchRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 `;
 
 const SearchWrapper = styled.div`
   position: relative;
+  flex: 1;
+  max-width: 350px;
 `;
 
 const SearchInputContainer = styled.div`
@@ -18,7 +26,7 @@ const SearchInputContainer = styled.div`
   align-items: center;
   background: white;
   border: 1px solid #dcdce4;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
@@ -37,7 +45,7 @@ const SearchIcon = styled.div`
 
 const SearchInput = styled.input`
   flex: 1;
-  padding: 10px 0;
+  padding: 12px 0;
   border: none;
   font-size: 14px;
   outline: none;
@@ -77,6 +85,44 @@ const LoadingSpinner = styled.div`
   }
 `;
 
+const RefreshButton = styled.button<{ $isRefreshing?: boolean }>`
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background-color: ${(props) => (props.$isRefreshing ? '#6c63ff' : '#4945ff')};
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background-color: #3832e0;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  svg.spinning {
+    animation: spin 1s linear infinite;
+  }
+`;
+
 const ResultsDropdown = styled.div`
   position: absolute;
   top: calc(100% + 4px);
@@ -84,7 +130,7 @@ const ResultsDropdown = styled.div`
   right: 0;
   background: white;
   border: 1px solid #dcdce4;
-  border-radius: 4px;
+  border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   max-height: 300px;
   overflow-y: auto;
@@ -170,6 +216,8 @@ interface MapSearchProps {
   onClear: () => void;
   showResults: boolean;
   setShowResults: (show: boolean) => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 const getPlaceIcon = (placeType: string[]) => {
@@ -217,6 +265,8 @@ export const MapSearch: React.FC<MapSearchProps> = ({
   onClear,
   showResults,
   setShowResults,
+  onRefresh,
+  isRefreshing = false,
 }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -235,62 +285,102 @@ export const MapSearch: React.FC<MapSearchProps> = ({
 
   return (
     <ControlsContainer>
-      <SearchWrapper>
-        <SearchInputContainer>
-          <SearchIcon>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-            </svg>
-          </SearchIcon>
-          <SearchInput
-            type="text"
-            value={searchQuery}
-            onChange={handleInputChange}
-            onFocus={() => setShowResults(true)}
-            placeholder="Search for a location..."
-          />
-          {isSearching && (
-            <LoadingSpinner>
+      <SearchRow>
+        <SearchWrapper>
+          <SearchInputContainer>
+            <SearchIcon>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+              </svg>
+            </SearchIcon>
+            <SearchInput
+              type="text"
+              value={searchQuery}
+              onChange={handleInputChange}
+              onFocus={() => setShowResults(true)}
+              placeholder="Search for a location..."
+            />
+            {isSearching && (
+              <LoadingSpinner>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z" />
+                </svg>
+              </LoadingSpinner>
+            )}
+            {searchQuery && !isSearching && (
+              <ClearButton onClick={handleClear} type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                </svg>
+              </ClearButton>
+            )}
+          </SearchInputContainer>
+
+          {showResults && searchQuery.length > 2 && (
+            <ResultsDropdown>
+              {searchResults.length > 0 ? (
+                searchResults.map((result) => {
+                  const [title, ...rest] = result.place_name.split(',');
+                  const subtitle = rest.join(',').trim();
+                  return (
+                    <ResultItem
+                      key={result.id}
+                      onClick={() => handleResultClick(result)}
+                      type="button"
+                    >
+                      <ResultIcon>{getPlaceIcon(result.place_type)}</ResultIcon>
+                      <ResultTextContainer>
+                        <ResultTitle>{title}</ResultTitle>
+                        {subtitle && <ResultSubtitle>{subtitle}</ResultSubtitle>}
+                      </ResultTextContainer>
+                    </ResultItem>
+                  );
+                })
+              ) : !isSearching ? (
+                <NoResults>No results found</NoResults>
+              ) : null}
+            </ResultsDropdown>
+          )}
+        </SearchWrapper>
+
+        {onRefresh && (
+          <RefreshButton
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            $isRefreshing={isRefreshing}
+            type="button"
+            title="Refresh to original location"
+          >
+            {isRefreshing ? (
+              <svg
+                className="spinning"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z" />
               </svg>
-            </LoadingSpinner>
-          )}
-          {searchQuery && !isSearching && (
-            <ClearButton onClick={handleClear} type="button">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+            ) : (
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                <path d="M16 21h5v-5" />
               </svg>
-            </ClearButton>
-          )}
-        </SearchInputContainer>
-
-        {showResults && searchQuery.length > 2 && (
-          <ResultsDropdown>
-            {searchResults.length > 0 ? (
-              searchResults.map((result) => {
-                const [title, ...rest] = result.place_name.split(',');
-                const subtitle = rest.join(',').trim();
-                return (
-                  <ResultItem
-                    key={result.id}
-                    onClick={() => handleResultClick(result)}
-                    type="button"
-                  >
-                    <ResultIcon>{getPlaceIcon(result.place_type)}</ResultIcon>
-                    <ResultTextContainer>
-                      <ResultTitle>{title}</ResultTitle>
-                      {subtitle && <ResultSubtitle>{subtitle}</ResultSubtitle>}
-                    </ResultTextContainer>
-                  </ResultItem>
-                );
-              })
-            ) : !isSearching ? (
-              <NoResults>No results found</NoResults>
-            ) : null}
-          </ResultsDropdown>
+            )}
+          </RefreshButton>
         )}
-      </SearchWrapper>
+      </SearchRow>
     </ControlsContainer>
   );
 };

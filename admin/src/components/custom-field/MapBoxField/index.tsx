@@ -38,7 +38,16 @@ export function MapBoxField({ name, onChange, value, intlLabel, required }: MapB
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialValueRef = useRef<MapBoxValue | null>(null);
+
+  // Store the initial value on first render
+  useEffect(() => {
+    if (value && initialValueRef.current === null) {
+      initialValueRef.current = { ...value } as MapBoxValue;
+    }
+  }, [value]);
 
   const updateMarkerPosition = useCallback(
     (lng: number, lat: number, address?: string) => {
@@ -136,6 +145,39 @@ export function MapBoxField({ name, onChange, value, intlLabel, required }: MapB
     setShowResults(false);
   }, []);
 
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+
+    // Reset to original saved value (from when component first loaded)
+    const originalValue = initialValueRef.current;
+    if (originalValue) {
+      setViewState((prev) => ({
+        ...prev,
+        longitude: originalValue.longitude,
+        latitude: originalValue.latitude,
+        zoom: originalValue.zoom || 12,
+        pitch: originalValue.pitch || 0,
+        bearing: originalValue.bearing || 0,
+      }));
+      setMarkerPosition({
+        longitude: originalValue.longitude,
+        latitude: originalValue.latitude,
+      });
+
+      // Also reset the form value to original
+      onChange({ target: { name, value: originalValue, type: 'json' } });
+    }
+
+    // Clear search state
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowResults(false);
+
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 500);
+  }, [name, onChange, setViewState, setMarkerPosition]);
+
   const handleMapClick = (event: any) => {
     const { lngLat } = event;
     updateMarkerPosition(lngLat.lng, lngLat.lat);
@@ -219,6 +261,8 @@ export function MapBoxField({ name, onChange, value, intlLabel, required }: MapB
           onClear={handleClearSearch}
           showResults={showResults}
           setShowResults={setShowResults}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
         />
         <Map
           {...viewState}
