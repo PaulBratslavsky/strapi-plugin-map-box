@@ -16,9 +16,8 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async getSettings(ctx) {
-    const result = getPluginConfig(strapi, 'public');
-    console.log('result from getSettings', result);
-    ctx.body = result;
+    const config = getPluginConfig(strapi, 'public');
+    ctx.body = config;
   },
 });
 

@@ -9,9 +9,9 @@ import Map, {
 } from 'react-map-gl/mapbox';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFetchClient } from '@strapi/strapi/admin';
-import { MapSearch } from './MapSearch';
+import { MapSearch, SearchResult } from './MapSearch';
 
 import { useMapBoxSettings, useMapLocationHook } from './hooks';
 import { DebugInfo } from './DebugInfo';
@@ -26,8 +26,6 @@ interface MapBoxFieldProps {
   required?: boolean;
 }
 
-// #endregion
-
 export function MapBoxField({ name, onChange, value, intlLabel, required }: MapBoxFieldProps) {
   const { get } = useFetchClient();
   const { config, isLoading, error } = useMapBoxSettings();
@@ -36,64 +34,107 @@ export function MapBoxField({ name, onChange, value, intlLabel, required }: MapB
   const { accessToken, debugMode } = config || {};
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const updateMarkerPosition = (lng: number, lat: number, address?: string) => {
-    setMarkerPosition({ longitude: lng, latitude: lat });
+  const updateMarkerPosition = useCallback(
+    (lng: number, lat: number, address?: string) => {
+      setMarkerPosition({ longitude: lng, latitude: lat });
 
-    // Update the JSON value with all necessary data
-    const newValue = {
-      longitude: lng,
-      latitude: lat,
-      address: address || 'Selected location',
-      zoom: viewState.zoom,
-      pitch: viewState.pitch,
-      bearing: viewState.bearing,
-    };
+      const newValue = {
+        longitude: lng,
+        latitude: lat,
+        address: address || 'Selected location',
+        zoom: viewState.zoom,
+        pitch: viewState.pitch,
+        bearing: viewState.bearing,
+      };
 
-    onChange({ target: { name, value: newValue, type: 'json' } });
-  };
+      onChange({ target: { name, value: newValue, type: 'json' } });
+    },
+    [name, onChange, setMarkerPosition, viewState.zoom, viewState.pitch, viewState.bearing]
+  );
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  // Debounced search as user types
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
 
-    try {
-      setSearchError(null);
-      const encodedQuery = encodeURIComponent(searchQuery.trim());
-      const url = `/map-box/location-search/${encodedQuery}`;
-      const { data } = await get(url);
+    if (searchQuery.trim().length <= 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
 
-      setSearchResults(data);
+    setIsSearching(true);
 
-      if (data.features && data.features[0]) {
-        const [longitude, latitude] = data.features[0].center;
-        // Update both the view and marker position
-        setViewState((prev) => ({
-          ...prev,
-          longitude,
-          latitude,
-          zoom: 14,
-          transitionDuration: 1000,
-        }));
-        updateMarkerPosition(longitude, latitude, data.features[0].place_name);
-      } else if (data.error) {
-        setSearchError(data.error);
-      } else {
-        setSearchError('No results found');
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        setSearchError(null);
+        const encodedQuery = encodeURIComponent(searchQuery.trim());
+        const url = `/map-box/location-search/${encodedQuery}`;
+        const { data } = await get(url);
+
+        if (data.features) {
+          setSearchResults(
+            data.features.slice(0, 5).map((feature: any) => ({
+              id: feature.id,
+              place_name: feature.place_name,
+              center: feature.center,
+              place_type: feature.place_type,
+            }))
+          );
+        } else if (data.error) {
+          setSearchError(data.error);
+          setSearchResults([]);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (error) {
+        console.error('Error searching location:', error);
+        setSearchError(error instanceof Error ? error.message : 'An error occurred');
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
       }
-    } catch (error) {
-      console.error('Error searching location:', error);
-      setSearchError(error instanceof Error ? error.message : 'An error occurred');
-    }
-  };
+    }, 300);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSearch();
-    }
-  };
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, get]);
+
+  const handleSelectResult = useCallback(
+    (result: SearchResult) => {
+      const [longitude, latitude] = result.center;
+
+      setViewState((prev) => ({
+        ...prev,
+        longitude,
+        latitude,
+        zoom: 14,
+        transitionDuration: 1000,
+      }));
+
+      updateMarkerPosition(longitude, latitude, result.place_name);
+      setSearchQuery(result.place_name.split(',')[0]);
+      setSearchResults([]);
+      setShowResults(false);
+    },
+    [setViewState, updateMarkerPosition]
+  );
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowResults(false);
+  }, []);
 
   const handleMapClick = (event: any) => {
     const { lngLat } = event;
@@ -102,6 +143,22 @@ export function MapBoxField({ name, onChange, value, intlLabel, required }: MapB
 
   const handleMapMove = (evt: any) => {
     setViewState(evt.viewState);
+  };
+
+  const handleMapMoveEnd = (evt: any) => {
+    const { longitude, latitude, zoom, pitch, bearing } = evt.viewState;
+
+    // Save the current view state including zoom level
+    const newValue = {
+      longitude: markerPosition.longitude,
+      latitude: markerPosition.latitude,
+      address: (value as MapBoxValue)?.address || 'Selected location',
+      zoom,
+      pitch,
+      bearing,
+    };
+
+    onChange({ target: { name, value: newValue, type: 'json' } });
   };
 
   const handleMarkerDragEnd = (event: any) => {
@@ -154,17 +211,21 @@ export function MapBoxField({ name, onChange, value, intlLabel, required }: MapB
     <div>
       <div style={{ position: 'relative', height: '500px', width: '100%' }}>
         <MapSearch
-          onSearch={handleSearch}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          handleKeyDown={handleKeyDown}
+          searchResults={searchResults}
+          isSearching={isSearching}
+          onSelectResult={handleSelectResult}
+          onClear={handleClearSearch}
+          showResults={showResults}
+          setShowResults={setShowResults}
         />
         <Map
           {...viewState}
           onMove={handleMapMove}
+          onMoveEnd={handleMapMoveEnd}
           onClick={handleMapClick}
           mapStyle="mapbox://styles/mapbox/streets-v12"
-          // mapStyle="mapbox://styles/mapbox/light-v11"
           mapboxAccessToken={accessToken}
           attributionControl={false}
           style={{ height: '100%', width: '100%' }}
