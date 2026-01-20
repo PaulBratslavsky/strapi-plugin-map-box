@@ -61,7 +61,7 @@ export function MapBoxField({ name, onChange, value, intlLabel, required }: MapB
     try {
       setSearchError(null);
       const encodedQuery = encodeURIComponent(searchQuery.trim());
-      const url = `/strapi-plugin-map-box/location-search/${encodedQuery}`;
+      const url = `/map-box/location-search/${encodedQuery}`;
       const { data } = await get(url);
 
       setSearchResults(data);

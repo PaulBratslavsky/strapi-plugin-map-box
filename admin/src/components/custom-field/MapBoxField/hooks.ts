@@ -18,7 +18,7 @@ export const useMapBoxSettings = () => {
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
-        const { data } = await get('/strapi-plugin-map-box/get-settings');
+        const { data } = await get('/map-box/get-settings');
         console.log('data from getSettings', data);
         setConfig(data);
         setError(null);
@@ -44,7 +44,7 @@ export const useMapLocationHook = (initialValue?: MapBoxValue) => {
   useEffect(() => {
     if (initialValue) {
       console.log('Initializing from previous value:', initialValue);
-      const previousValue = initialValue as MapBoxValue;
+      const previousValue = initialValue;
 
       setViewState((prev) => ({
         ...prev,

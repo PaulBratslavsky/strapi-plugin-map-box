@@ -8,7 +8,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     console.log('Query from URL:', query);
 
     const result = await strapi
-      .plugin('strapi-plugin-map-box')
+      .plugin('map-box')
       .service('service')
       .locationSearch(query);
 
@@ -16,7 +16,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   async getSettings(ctx) {
-    const result = getPluginConfig('public')
+    const result = getPluginConfig(strapi, 'public');
     console.log('result from getSettings', result);
     ctx.body = result;
   },

@@ -1,7 +1,12 @@
-import { config } from '../../../types';
+import type { Core } from '@strapi/strapi';
 
-export function getPluginConfig(name: string) {
-  const config = strapi.plugin('strapi-plugin-map-box').config<config['public']>(name);
+export interface PluginConfig {
+  accessToken: string;
+  debugMode: boolean;
+}
+
+export function getPluginConfig(strapi: Core.Strapi, name: string): PluginConfig {
+  const config = strapi.plugin('map-box').config(name) as PluginConfig;
   return config;
 }
 

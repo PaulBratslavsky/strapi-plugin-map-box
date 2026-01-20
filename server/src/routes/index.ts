@@ -6,7 +6,7 @@ const routes = {
     type: 'content-api',
     routes: contentAPIRoutes,
   },
-  'admin-api': {
+  admin: {
     type: 'admin',
     routes: adminAPIRoutes,
   },

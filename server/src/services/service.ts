@@ -33,7 +33,7 @@ interface MapBoxConfig {
 const service = ({ strapi }: { strapi: Core.Strapi }) => ({
   async locationSearch(query: string) {
     try {
-      const pluginSettings = getPluginConfig('public');
+      const pluginSettings = getPluginConfig(strapi, 'public');
 
       console.log('pluginSettings', pluginSettings);
 
