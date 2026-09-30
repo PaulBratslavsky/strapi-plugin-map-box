@@ -268,6 +268,13 @@ type MapLocation = {
 };
 ```
 
+## Changelog
+
+### 0.0.5
+- **Fix:** the plugin now registers as `map-box`, matching the `config/plugins.ts` key in this README, its own routes (`/map-box/...`) and `strapi.plugin('map-box')`. Installed from npm, 0.0.4 registered as `strapi-plugin-map-box`, so the documented config failed at boot with *"Error loading the plugin map-box because map-box is not installed"*.
+- **Fix:** the location search in the map field called `/strapi-plugin-map-box/location-search/...` (404). Every admin call now uses the plugin id.
+- **Security:** the server no longer logs the Mapbox access token or the plugin settings on each search. Search queries are only logged at debug level when `debugMode` is on.
+
 ## License
 
 MIT

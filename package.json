@@ -1,5 +1,5 @@
 {
-  "version": "0.0.4",
+  "version": "0.0.5",
   "keywords": [
     "mapbox",
     "map",
@@ -70,7 +70,7 @@
   },
   "strapi": {
     "kind": "plugin",
-    "name": "strapi-plugin-map-box",
+    "name": "map-box",
     "displayName": "MapBox",
     "description": "This plugin allows you to add a map field to your Strapi content types. It uses MapBox to display the map and search for locations."
   },

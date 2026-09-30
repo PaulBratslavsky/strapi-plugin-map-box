@@ -1,14 +1,13 @@
 import type { Core } from '@strapi/strapi';
-import { getPluginConfig } from '../utils';
+import { getPluginConfig, PLUGIN_ID } from '../utils';
 
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   async locationSearch(ctx) {
     // Extract query from URL path
     const query = ctx.params.query;
-    console.log('Query from URL:', query);
 
     const result = await strapi
-      .plugin('map-box')
+      .plugin(PLUGIN_ID)
       .service('service')
       .locationSearch(query);
 
