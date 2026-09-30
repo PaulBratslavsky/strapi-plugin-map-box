@@ -2,6 +2,7 @@ import { type MapBoxValue, type ViewState, DEFAULT_VIEW_STATE } from './types';
 
 import { useEffect, useState } from 'react';
 import { useFetchClient } from '@strapi/strapi/admin';
+import { PLUGIN_ID } from '../../../pluginId';
 
 type config = {
   accessToken: string;
@@ -18,8 +19,7 @@ export const useMapBoxSettings = () => {
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
-        const { data } = await get('/map-box/get-settings');
-        console.log('data from getSettings', data);
+        const { data } = await get(`/${PLUGIN_ID}/get-settings`);
         setConfig(data);
         setError(null);
       } catch (err) {
@@ -43,7 +43,6 @@ export const useMapLocationHook = (initialValue?: MapBoxValue) => {
 
   useEffect(() => {
     if (initialValue) {
-      console.log('Initializing from previous value:', initialValue);
       const previousValue = initialValue;
 
       setViewState((prev) => ({
@@ -74,7 +73,7 @@ export const useLocationService = () => {
     try {
       setSearchError(null);
       const encodedQuery = encodeURIComponent(query.trim());
-      const { data } = await get(`/strapi-plugin-map-box/location-search/${encodedQuery}`);
+      const { data } = await get(`/${PLUGIN_ID}/location-search/${encodedQuery}`);
       setSearchResults(data);
       return data;
     } catch (error) {

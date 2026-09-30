@@ -11,6 +11,7 @@ import Map, {
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFetchClient } from '@strapi/strapi/admin';
+import { PLUGIN_ID } from '../../../pluginId';
 import { MapSearch, SearchResult } from './MapSearch';
 
 import { useMapBoxSettings, useMapLocationHook } from './hooks';
@@ -85,7 +86,7 @@ export function MapBoxField({ name, onChange, value, intlLabel, required }: MapB
       try {
         setSearchError(null);
         const encodedQuery = encodeURIComponent(searchQuery.trim());
-        const url = `/map-box/location-search/${encodedQuery}`;
+        const url = `/${PLUGIN_ID}/location-search/${encodedQuery}`;
         const { data } = await get(url);
 
         if (data.features) {

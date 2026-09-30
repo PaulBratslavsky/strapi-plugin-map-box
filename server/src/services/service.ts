@@ -35,8 +35,6 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
     try {
       const pluginSettings = getPluginConfig(strapi, 'public');
 
-      console.log('pluginSettings', pluginSettings);
-
       if (!pluginSettings.accessToken) {
         return {
           error:
@@ -46,8 +44,7 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
       }
 
       const MAPBOX_ACCESS_TOKEN = pluginSettings.accessToken;
-      console.log('MAPBOX_ACCESS_TOKEN', MAPBOX_ACCESS_TOKEN);
-      console.log('Searching for:', query);
+      if (pluginSettings.debugMode) strapi.log.debug(`[map-box] location search: ${query}`);
 
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}`
@@ -60,7 +57,7 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
       const data = (await response.json()) as MapboxResponse;
       return data;
     } catch (error) {
-      console.error('Error searching location:', error);
+      strapi.log.error(`[map-box] location search failed: ${error instanceof Error ? error.message : error}`);
       return {
         error: error instanceof Error ? error.message : 'An error occurred',
         features: [],
